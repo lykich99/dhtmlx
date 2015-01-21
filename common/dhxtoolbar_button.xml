@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<toolbar>
+	<item id="add"   type="button"   img="new.gif"  imgdis="new_dis.gif"  text="Добавить"  />
+	<item id="edit"   type="button"   img="edit.png" imgdis="edit.png"    text="Изменить"  />
+	<item id="bdelete"   type="button"   img="delete.png" imgdis="delete.png"  hidden  = "true"  text="Удалить" />
+	<item id="sep2"   type="separator"/>
+
+</toolbar>

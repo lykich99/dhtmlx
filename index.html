@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Test task</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+	<script src="./codebase/dhtmlx.js" type="text/javascript" charset="utf-8"></script>
+	<link rel="stylesheet" type="text/css" href="./codebase/dhtmlx.css"/>
+	
+	<style>
+
+		html, body {
+			width: 100%;
+			height: 100%;
+			margin: 0px;
+			padding: 0px;
+			background-color: #ebebeb;
+			overflow: hidden;
+		}
+		.dhxwins_vp_dhx_skyblue div.dhxwin_hdr div.dhxwin_icon.without_icon {
+			display: none;
+		}
+
+
+
+	</style>
+	<script>
+		var myLayout, myToolbar, myGrid, myCellToolbar, myTree ;
+		function doOnLoad() {
+			myLayout = new dhtmlXLayoutObject({
+				parent: document.body,
+				pattern: "2U",
+				cells: [{id: "a", text: "Баннер"},{id: "b", text: ""} ]
+			});
+			myLayout.cells("a").setWidth(300);
+			myLayout.cells("b").hideHeader();
+			//******** Toolbar header attach *********************************
+			myToolbar = myLayout.attachToolbar({
+				icons_path: "./common/imgs/"
+			});
+			myToolbar.addButton("paste", 11, "Баннер", "paste.gif", "paste_dis.gif");			
+			//******** Toolbar layout ****************************************
+			myCellToolbar = myLayout.cells("b").attachToolbar({
+				icons_path: "./common/imgs/",
+				xml: "./common/dhxtoolbar_button.xml"
+			});
+		
+			myCellToolbar.attachEvent("onClick", function(id){
+					var tree_select = myTree.getSelectedItemId();
+					
+					if( tree_select == 't_all' && id == 'add' ) {
+					    my_mess("Обозначте банер!!!","Выделите тип банера!!!");			
+				    } 
+				   if ( id == "edit") { 
+						 var r_status = mygrid.getSelectedCellIndex();
+						 if ( r_status === -1 ) {
+						     my_mess("Определите строку","Определите строку для редактирования!!!");
+					      }	else {
+							   var select_grid_id = mygrid.getSelectedRowId();
+							   var cell_combo = mygrid.cells(select_grid_id,7).getValue();
+							   var combourl = "./codebase/get_combo.php?action=edit&id="+cell_combo;
+							   Grid_Form(id,combourl);
+
+						  }	  	   
+				     }		 
+				   if( tree_select !== 't_all' && id == 'add' ) { 
+					   var combo_url = "./codebase/get_combo.php?action="+tree_select;  
+				       Grid_Form(id,combo_url);				       
+				     }    
+				   if( id == "bdelete" ) {
+					  var ch_checkbox = mygrid.getCheckedRows(1);
+					  d_checkbox(ch_checkbox);
+				   }	 
+					 
+					 
+			});
+
+			//*******************************************************
+			myTree = myLayout.cells("a").attachTree();
+			myTree.setImagePath("./codebase/imgs/dhxtree_skyblue/");
+			myTree.loadXML("./common/tree.xml");
+			//**************** event tree ***************************
+			myTree.attachEvent("onClick", function(id){
+                  var action_tree;
+                  if ( id !== 't_all' ) {
+						  action_tree = "./codebase/my_connector.php?action=" + id;       
+				  } else {
+					      action_tree = "./codebase/my_connector.php";
+				  }	  
+				  mygrid.clearAndLoad(action_tree);
+            });
+
+			//**************** Grid *********************************
+			var mygrid;
+			mygrid = myLayout.cells("b").attachGrid();
+			mygrid.setImagePath("./codebase/imgs/");
+			mygrid.setHeader(["ID",/*"#master_checkbox",*/"<input id='my_heder_ch' type='checkbox' onclick='myLayout.h_check(this);'/> ","Сортировка","Название","Дата","Статус","link","combo_text"],null,["padding-top: 20px;","padding-top: 20px;","padding-top: 20px;","text-align:center;","text-align:center;","text-align:center;padding-top: 20px;"] );
+			mygrid.attachHeader(["#rspan","#rspan","#rspan","#connector_text_filter","#connector_text_filter","#rspan","#rspan","#rspan"]);
+			mygrid.setInitWidths("40,40,90,700,80,*");
+			mygrid.setColAlign("center,center,center,center,center,center");
+			mygrid.setColTypes("ro,ch,edn,ron,ron,edtxt,ro,ro");
+			mygrid.setColSorting("int,int,str,str,date,str,str,str");
+			//mygrid.enableSmartRendering(true);
+			mygrid.init();
+			mygrid.load("./codebase/my_connector.php");
+			mygrid.setColumnHidden(6,true);mygrid.setColumnHidden(7,true);
+			var dp = new dataProcessor("./codebase/my_connector.php");
+			dp.init(mygrid);
+			
+			//************* checkbox event ************************
+            mygrid.attachEvent("onCheckbox",function(id,Ind,value){
+                 var checked_row = mygrid.getCheckedRows(1);
+
+                 if (checked_row) {
+                       myCellToolbar.showItem("bdelete");
+                 } else {
+					   myCellToolbar.hideItem("bdelete");	
+			     }	   
+            });
+            //************* Grid header evetn checkbox ******************
+              myLayout.h_check =  function handleClick(cb) {  
+				 var checked_rows = mygrid.getCheckedRows(0);
+					 if( cb.checked == true ) {
+						 if( checked_rows ) {  
+						      mygrid.checkAll(true);
+						      myCellToolbar.showItem("bdelete");
+						   } else { 
+							  myCellToolbar.hideItem("bdelete");
+						   }
+					   } else {
+						  mygrid.checkAll(false);
+						  myCellToolbar.hideItem("bdelete");
+					   }	         
+			};
+            //************ DELETE chekboxs check ************************
+            var d_checkbox = function fd_checkbox(checked_item) {
+                 window.dhx4.ajax.get("./codebase/save_form.php?action=delete&delete_val="+checked_item, function(r){
+				 var a_res = r.xmlDoc.response;
+				 if ( a_res == 1  ) {
+                       var treeselectnow = myTree.getSelectedItemId();	
+                       mygrid.clearAndLoad("./codebase/my_connector.php?action=" + treeselectnow);   
+                       myCellToolbar.hideItem("bdelete");
+                   } else {
+					   dhtmlx.message("ERROR DELETE DATA !!!!" + r);   
+				   }
+				});
+            
+            
+		    };
+            //********** Messagebox ***************************
+			 function my_mess(mtitl,mtext){ 
+			     	dhtmlx.message({
+					title: mtitl,
+					type: "alert-warning",
+					text: mtext,
+				 });	
+		     }; 
+			
+			//********* Form **********************************
+			var myWins = new dhtmlXWindows();
+            var myForm; var combo;var w1 ; 
+ 
+            var Grid_Form = function(id_ev,combourl){
+				        var check_w1 = myWins.isWindow("about");
+		     
+                         w1 = myWins.createWindow("about", 500, 200, 600, 350);
+                         w1.setText('Баннер');
+                         w1.setIconCss('without_icon');
+                         w1.denyResize();
+			             w1.denyPark();
+			             w1.button("minmax").hide();
+			             w1.button("park").hide();
+			             w1.show();
+			             w1.setModal(true);
+				      			     
+				      var formData = [
+								{type: "settings", position: "label-left", labelWidth: 100, inputWidth: 430},
+								{type: "fieldset", name: "Target", label: "Основное", inputWidth: "auto", offsetTop: 12, list: [
+								    {type: "input", name:"row_id", label: "Grid_row_id", hidden:true, value:"hide_add"},
+									{type: "combo", name:"c2", connector: combourl,label: "Плеер"},
+									{type: "input", label: "Название кадра", name: "name"},
+									{type: "input", label: "Ссылка", name: "link"},
+								  ]},
+									{type: "fieldset", name: "Upl", label: "Фото кадра", inputWidth: "auto", offsetTop: 12, list: [
+									{type: "upload", name: "myFile" , inputWidth: 530, url: "./common/php/dhtmlxform_item_upload.php", _swfLogs: "enabled", swfPath: "./common/php/uploader.swf", swfUrl: "./common/php/dhtmlxform_item_upload.php"},									
+								  ]},  {type:"newcolumn"},
+								  {type: "button", name:"b_save", value: "ОК", offsetLeft: 410, offsetTop: 0},
+								  {type:"newcolumn"},
+								  {type: "button", name:"b_can", value: "Отмена", offsetLeft: 10,offsetTop: 0}
+								  
+							];
+				    			
+                         myForm = w1.attachForm(formData, true);
+                         combo =  myForm.getCombo("c2");
+                         combo.readonly(true);
+                        
+                       var url_to_get;
+                       
+                       if ( id_ev == "edit" ) {
+						    var selectedId = mygrid.getSelectedRowId();
+                            var cell_name = mygrid.cells(selectedId,3).getValue();
+                            var cell_link = mygrid.cells(selectedId,6).getValue();
+                            myForm.setItemValue("name", cell_name); 
+                            myForm.setItemValue("row_id", selectedId);
+                            myForm.setItemValue("link",cell_link);
+                            url_to_get = "./codebase/save_form.php?action=edit";
+                        } else { 
+                            url_to_get = "./codebase/save_form.php?action=add"; 
+					    }
+                       
+                        
+                        myForm.attachEvent("onButtonClick", function(id){
+						 var tree_select_now = myTree.getSelectedItemId();	
+							
+							if ( id == "b_save" ) {
+
+								 myForm.send(url_to_get, "get", function(loader, response){	
+                                      if ( response == true  ) {
+										  
+                                           dhtmlx.message("Your data has been successfully saved!");
+                                           mygrid.clearAndLoad("./codebase/my_connector.php?action=" + tree_select_now);
+                                           w1.close(); 
+                                       } else {
+										   dhtmlx.message("ERROR add and save DATA !!!!" + response);   
+									   }	       
+                                   });
+
+							 }
+							if ( id == "b_can" ) {
+								  w1.hide();
+								  w1.setModal(false);
+
+							  }	   
+						});
+			            
+			 }
+			
+
+
+
+			
+			
+		}
+	</script>
+</head>
+<body onload="doOnLoad();">
+	
+</body>
+</html>

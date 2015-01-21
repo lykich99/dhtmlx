@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding="UTF-8"?>
+<tree id="0">
+	<item text="Все" id="t_all" open="1" call="1" select="1">
+			<item text="Баннер на лицевой (1000х100)" id="banner"/>
+			<item text="Тестовый баннер" id="t_banner"/>
+	</item>
+</tree>
